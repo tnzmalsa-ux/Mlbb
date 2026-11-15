@@ -18,14 +18,22 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
+      - name: Inspect and Build
+        run: |
+          ls -la
+          for f in *.zip; do [ -e "$f" ] && unzip -o "$f"; done
+          GRADLEW_FILE=$(find . -maxdepth 4 -name "gradlew" | head -n 1)
+          if [ -z "$GRADLEW_FILE" ]; then
+            echo "No gradlew found! Files inside:"
+            find . -maxdepth 3 -not -path '*/.*'
+            exit 1
+          fi
+          cd "$(dirname "$GRADLEW_FILE")"
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v5
         with:
           name: app-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: "**/build/outputs/apk/debug/*.apk"
